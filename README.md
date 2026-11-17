@@ -41,3 +41,9 @@ Abra o arquivo `index.html` no navegador (clique duas vezes nele) ou use a exten
 O EcoTrip é uma proposta de turismo sustentável que apresenta destinos e incentiva escolhas mais conscientes, valorizando a natureza e as comunidades locais.
 
 **EcoTrip — Viaje com propósito. 🌱✈️**
+
+Avaliação em pares - Avaliador: João Pedro Rodrigues Fabio
+
+O projeto apresenta uma boa organização, utiliza corretamente as tags semânticas do HTML e demonstra uma boa aplicação de lógica de programação no JavaScript, com validações, condicionais e estruturas de repetição. A estrutura está coerente com a proposta e apresenta funcionalidades interessantes.
+
+Minha avaliação: o projeto atende a boa parte dos requisitos, com uma estrutura bem organizada e uma lógica funcional.
