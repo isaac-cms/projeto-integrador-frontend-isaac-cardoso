@@ -1,0 +1,51 @@
+/* Reset do EcoTrip: tira os estilos padrão do navegador
+   para a página começar igual em qualquer lugar. */
+
+/* box-sizing: border-box em tudo, assim padding e borda
+   não aumentam a largura que eu defini. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body,
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+blockquote,
+ul,
+ol {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+}
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+table {
+  border-collapse: collapse;
+}
