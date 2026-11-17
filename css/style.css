@@ -600,6 +600,13 @@ select:focus-visible,
   .secao {
     padding: 1.2rem;
   }
+
+  /* Células menores para a tabela caber na largura do celular */
+  .tabela-destinos th,
+  .tabela-destinos td {
+    padding: 0.6rem 0.4rem;
+    font-size: 0.9rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
