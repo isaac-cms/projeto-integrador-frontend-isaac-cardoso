@@ -1,29 +1,37 @@
 // EcoTrip — js/script.js
 // Tema: vagas dos passeios do EcoTrip.
-// Entrada: lista de passeios (nome, estado, tipo, vagas e inscritos).
-// Processamento: calcular as vagas restantes, classificar cada passeio e resumir.
-// Saída: cartões e um resumo mostrados na página, e um gráfico em Canvas.
+// Entrada: lista de passeios (nome, estado, tipo, vagas, inscritos e reserva),
+//          mais o que a pessoa digita, escolhe e clica na página.
+// Processamento: calcular as vagas restantes, classificar, filtrar e resumir.
+// Saída: cartões e um resumo na página, e um gráfico em Canvas.
 //
 // Pseudocódigo:
-// 1. Criar a lista de passeios.
+// 1. Criar a lista de passeios (fonte de verdade da tela).
 // 2. Calcular as vagas restantes de cada passeio.
 // 3. Classificar o passeio: esgotado, últimas vagas ou disponível.
-// 4. Contar os passeios com vagas, somar as vagas livres e achar o maior.
-// 5. Criar um cartão para cada passeio e mostrar na página junto com o resumo.
+// 4. Aplicar a busca e os filtros que a pessoa escolheu.
+// 5. Desenhar os cartões e escrever o resumo.
+// 6. Quando houver um evento (clique, digitação, escolha), alterar os dados e desenhar de novo.
 
 // ---------- 1. Dados ----------
-// Fonte de verdade: a lista da tela é montada a partir deste array.
+// Fonte de verdade: a lista da tela é desenhada a partir deste array.
 const passeios = [
-  { id: 1, nome: "Chapada dos Veadeiros", estado: "GO", tipo: "Trilha", vagas: 20, inscritos: 12 },
-  { id: 2, nome: "Fernando de Noronha", estado: "PE", tipo: "Praia", vagas: 10, inscritos: 9 },
-  { id: 3, nome: "Floresta Amazônica", estado: "AM", tipo: "Ecoturismo", vagas: 15, inscritos: 6 },
-  { id: 4, nome: "Pantanal", estado: "MT", tipo: "Ecoturismo", vagas: 12, inscritos: 12 },
-  { id: 5, nome: "Lençóis Maranhenses", estado: "MA", tipo: "Praia", vagas: 16, inscritos: 15 },
-  { id: 6, nome: "Bonito", estado: "MS", tipo: "Aventura", vagas: 8, inscritos: 3 }
+  { id: 1, nome: "Chapada dos Veadeiros", estado: "GO", tipo: "Trilha", vagas: 20, inscritos: 12, reservado: false },
+  { id: 2, nome: "Fernando de Noronha", estado: "PE", tipo: "Praia", vagas: 10, inscritos: 9, reservado: false },
+  { id: 3, nome: "Floresta Amazônica", estado: "AM", tipo: "Ecoturismo", vagas: 15, inscritos: 6, reservado: false },
+  { id: 4, nome: "Pantanal", estado: "MT", tipo: "Ecoturismo", vagas: 12, inscritos: 12, reservado: false },
+  { id: 5, nome: "Lençóis Maranhenses", estado: "MA", tipo: "Praia", vagas: 16, inscritos: 15, reservado: false },
+  { id: 6, nome: "Bonito", estado: "MS", tipo: "Aventura", vagas: 8, inscritos: 3, reservado: false }
 ];
+
+// Próximo id para os passeios cadastrados no formulário (muda a cada cadastro, por isso é let).
+let proximoId = passeios.length + 1;
 
 // Variável global: pode ser usada dentro de qualquer função deste arquivo.
 const limiteUltimasVagas = 3;
+
+// O desenho da lista lê estes valores. Os eventos só mudam estes valores.
+const filtros = { texto: "", tipo: "todos", soComVagas: false };
 
 // Cada faixa tem uma classe no CSS para mudar a cor do cartão.
 const classesDasFaixas = {
@@ -31,6 +39,17 @@ const classesDasFaixas = {
   "Últimas vagas": "ultimas-vagas",
   "Disponível": "disponivel"
 };
+
+// Elementos da página que o script usa.
+const botaoMenu = document.querySelector("#botao-menu");
+const menu = document.querySelector("#menu-principal");
+const campoBusca = document.querySelector("#campo-busca");
+const filtroTipo = document.querySelector("#filtro-tipo");
+const botaoSoVagas = document.querySelector("#botao-so-vagas");
+const areaLista = document.querySelector("#lista-passeios");
+const areaResumo = document.querySelector("#resumo");
+const formulario = document.querySelector("#formulario-passeio");
+const mensagemFormulario = document.querySelector("#mensagem-formulario");
 
 // ---------- 2. Funções que processam, classificam e formatam ----------
 
@@ -117,45 +136,75 @@ function analisarPasseios(lista) {
       nome: passeio.nome,
       estado: passeio.estado,
       tipo: passeio.tipo,
+      reservado: passeio.reservado,
       vagasRestantes: vagasRestantes,
       faixa: classificarDisponibilidade(vagasRestantes)
     };
   });
 }
 
-// Usa o filter para contar os passeios com vagas
-// e o reduce para achar o passeio com mais vagas.
-function gerarResumo(lista) {
-  if (lista.length === 0) {
-    return "Nenhum passeio cadastrado.";
-  }
+// Usa o filter para deixar só os passeios que combinam com a busca e com os filtros.
+// Função pura: só lê os parâmetros e devolve uma lista nova.
+function filtrarPasseios(lista, opcoes) {
+  const busca = opcoes.texto.trim().toLowerCase();
 
-  const comVagas = lista.filter((passeio) => passeio.vagasRestantes > 0);
-  const maisVagas = lista.reduce((maior, passeio) => {
-    return passeio.vagasRestantes > maior.vagasRestantes ? passeio : maior;
-  }, lista[0]);
-  const primeiro = buscarPrimeiroComVagas(lista);
+  return lista.filter((passeio) => {
+    const combinaTexto =
+      passeio.nome.toLowerCase().includes(busca) ||
+      passeio.estado.toLowerCase().includes(busca);
+    const combinaTipo = opcoes.tipo === "todos" || passeio.tipo === opcoes.tipo;
+    const combinaVagas = !opcoes.soComVagas || passeio.vagasRestantes > 0;
 
-  let texto = `Resumo: ${somarVagasLivres(lista)} vagas livres em ${comVagas.length} de ${lista.length} passeios.`;
-  texto += ` Mais vagas: ${maisVagas.nome} (${maisVagas.vagasRestantes}).`;
-
-  if (primeiro !== null) {
-    texto += ` Primeiro da lista com vagas: ${primeiro.nome}.`;
-  }
-
-  return texto;
+    return combinaTexto && combinaTipo && combinaVagas;
+  });
 }
 
-// ---------- 4. DOM: criar os cartões e mostrar na página ----------
+// Calcula o resumo (função pura): usa filter, reduce, for...of e while.
+function calcularResumo(visiveis, totalGeral) {
+  const comVagas = visiveis.filter((passeio) => passeio.vagasRestantes > 0);
+  const reservas = visiveis.reduce((total, passeio) => {
+    return passeio.reservado ? total + 1 : total;
+  }, 0);
 
-// Monta o cartão de um passeio e devolve o elemento.
-function criarCartao(passeio) {
-  const cartao = document.createElement("li");
+  return {
+    mostrando: visiveis.length,
+    total: totalGeral,
+    comVagas: comVagas.length,
+    vagasLivres: somarVagasLivres(visiveis),
+    reservas: reservas,
+    primeiro: buscarPrimeiroComVagas(visiveis)
+  };
+}
+
+// ---------- 4. DOM: criar os elementos e desenhar a tela ----------
+
+// Cria um botão pequeno de dentro do cartão.
+// O data-acao diz para o ouvinte da lista qual botão foi clicado.
+function criarBotao(acao, texto, nomeAcessivel) {
+  const botao = document.createElement("button");
+
+  botao.type = "button";
+  botao.textContent = texto;
+  botao.dataset.acao = acao;
+  botao.setAttribute("aria-label", nomeAcessivel);
+  botao.classList.add("botao-pequeno");
+
+  return botao;
+}
+
+// Monta o item de um passeio e devolve o elemento.
+// Todo texto entra por textContent, nunca por innerHTML.
+function criarItem(passeio) {
+  const item = document.createElement("li");
   const titulo = document.createElement("h3");
   const local = document.createElement("p");
   const descricao = document.createElement("p");
   const vagas = document.createElement("p");
   const selo = document.createElement("span");
+  const botoes = document.createElement("div");
+
+  const botaoReservar = criarBotao("reservar", "Reservar vaga", "Reservar vaga em " + passeio.nome);
+  const botaoRemover = criarBotao("remover", "Remover", "Remover " + passeio.nome + " da lista");
 
   titulo.textContent = passeio.nome;
   local.textContent = passeio.estado + " · " + passeio.tipo;
@@ -164,29 +213,266 @@ function criarCartao(passeio) {
   selo.textContent = passeio.faixa;
   selo.classList.add("selo");
 
-  cartao.classList.add("cartao", classesDasFaixas[passeio.faixa]);
-  cartao.append(titulo, local, descricao, vagas, selo);
+  // Botão com estado: o aria-pressed muda junto com a reserva.
+  botaoReservar.setAttribute("aria-pressed", String(passeio.reservado));
+  botaoReservar.disabled = passeio.faixa === "Esgotado" && !passeio.reservado;
+  botaoRemover.classList.add("botao-remover");
 
-  return cartao;
+  botoes.classList.add("botoes-cartao");
+  botoes.append(botaoReservar, botaoRemover);
+
+  // O data-id guarda qual passeio do array este item representa.
+  item.dataset.id = String(passeio.id);
+  item.classList.add("cartao", classesDasFaixas[passeio.faixa]);
+  if (passeio.reservado) {
+    item.classList.add("reservado");
+  }
+  item.append(titulo, local, descricao, vagas, selo, botoes);
+
+  return item;
 }
 
-// Escolhe os lugares da página e insere o resultado.
-function mostrarNaPagina(lista, textoResumo) {
-  const areaLista = document.querySelector("#lista-passeios");
-  const areaResumo = document.querySelector("#resumo");
+// Item mostrado quando nenhum passeio combina com a busca.
+function criarItemVazio() {
+  const item = document.createElement("li");
 
-  if (areaLista === null || areaResumo === null) {
+  item.textContent = "Nenhum passeio encontrado. Tente outra busca ou mude os filtros.";
+  item.classList.add("cartao-vazio");
+
+  return item;
+}
+
+// Escreve o resumo na página (o parágrafo tem aria-live, então o leitor de tela avisa a mudança).
+function escreverResumo(resumo) {
+  if (areaResumo === null) {
     return;
   }
 
-  areaResumo.textContent = textoResumo;
+  let texto = `Mostrando ${resumo.mostrando} de ${resumo.total} passeios.`;
 
-  for (const passeio of lista) {
-    areaLista.append(criarCartao(passeio));
+  if (resumo.mostrando === 0) {
+    texto += " Nenhum passeio encontrado.";
+  } else {
+    texto += ` ${resumo.vagasLivres} vagas livres em ${resumo.comVagas} passeios.`;
+    texto += ` Reservas feitas: ${resumo.reservas}.`;
+
+    if (resumo.primeiro !== null) {
+      texto += ` Primeiro com vagas: ${resumo.primeiro.nome}.`;
+    }
+  }
+
+  areaResumo.textContent = texto;
+}
+
+// Lê o array, aplica os filtros, troca o conteúdo da lista e atualiza o resumo.
+function desenhar() {
+  if (areaLista === null) {
+    return;
+  }
+
+  const analisados = analisarPasseios(passeios);
+  const visiveis = filtrarPasseios(analisados, filtros);
+  const itens = visiveis.map(criarItem);
+
+  if (itens.length === 0) {
+    itens.push(criarItemVazio());
+  }
+
+  areaLista.replaceChildren(...itens);
+  escreverResumo(calcularResumo(visiveis, analisados.length));
+}
+
+// ---------- 5. Eventos ----------
+
+// Menu (botão hambúrguer): aria-expanded muda junto com o menu aberto/fechado.
+function definirMenu(aberto) {
+  botaoMenu.setAttribute("aria-expanded", String(aberto));
+  botaoMenu.setAttribute("aria-label", aberto ? "Fechar menu" : "Abrir menu");
+  menu.classList.toggle("aberto", aberto);
+}
+
+function alternarMenu() {
+  const estaAberto = botaoMenu.getAttribute("aria-expanded") === "true";
+  definirMenu(!estaAberto);
+}
+
+// Escape fecha o menu e devolve o foco para o botão.
+function fecharMenuComEscape(evento) {
+  const estaAberto = botaoMenu.getAttribute("aria-expanded") === "true";
+
+  if (evento.key === "Escape" && estaAberto) {
+    definirMenu(false);
+    botaoMenu.focus();
   }
 }
 
-// ---------- 5. Gráfico em Canvas ----------
+// No celular, escolher um link fecha o menu.
+function fecharMenuAoEscolherLink(evento) {
+  if (evento.target.closest("a") !== null) {
+    definirMenu(false);
+  }
+}
+
+function iniciarMenu() {
+  if (botaoMenu === null || menu === null) {
+    return;
+  }
+
+  botaoMenu.addEventListener("click", alternarMenu);
+  menu.addEventListener("click", fecharMenuAoEscolherLink);
+  document.addEventListener("keydown", fecharMenuComEscape);
+}
+
+// Busca, filtro por tipo e botão "Só com vagas": cada um muda um valor
+// de "filtros" e chama a mesma função desenhar().
+function aoDigitarBusca(evento) {
+  filtros.texto = evento.target.value;
+  desenhar();
+}
+
+function aoMudarTipo(evento) {
+  filtros.tipo = evento.target.value;
+  desenhar();
+}
+
+function alternarSoComVagas() {
+  filtros.soComVagas = !filtros.soComVagas;
+  botaoSoVagas.setAttribute("aria-pressed", String(filtros.soComVagas));
+  desenhar();
+}
+
+function iniciarFiltros() {
+  if (campoBusca === null || filtroTipo === null || botaoSoVagas === null) {
+    return;
+  }
+
+  campoBusca.addEventListener("input", aoDigitarBusca);
+  filtroTipo.addEventListener("change", aoMudarTipo);
+  botaoSoVagas.addEventListener("click", alternarSoComVagas);
+}
+
+// Ações que alteram o array (os dados), sem mexer na tela.
+function alternarReserva(id) {
+  const passeio = passeios.find((item) => item.id === id);
+
+  if (passeio === undefined) {
+    return;
+  }
+
+  if (passeio.reservado) {
+    passeio.reservado = false;
+    passeio.inscritos = passeio.inscritos - 1;
+  } else if (calcularVagasRestantes(passeio.vagas, passeio.inscritos) > 0) {
+    passeio.reservado = true;
+    passeio.inscritos = passeio.inscritos + 1;
+  }
+}
+
+function removerPasseio(id) {
+  const posicao = passeios.findIndex((item) => item.id === id);
+
+  if (posicao !== -1) {
+    passeios.splice(posicao, 1);
+  }
+}
+
+// Depois de desenhar de novo o botão antigo some, então o foco volta para o botão novo
+// (ou para a lista, se o passeio foi removido).
+function devolverFoco(id, acao) {
+  if (acao === "reservar") {
+    const botao = areaLista.querySelector(`li[data-id="${id}"] button[data-acao="reservar"]`);
+
+    if (botao !== null) {
+      botao.focus();
+      return;
+    }
+  }
+
+  areaLista.focus();
+}
+
+// Um único ouvinte na lista (delegação de eventos).
+// Funciona também para os itens criados depois, porque o ouvinte está no <ul>.
+function tratarCliqueLista(evento) {
+  const botao = evento.target.closest("button[data-acao]");
+
+  if (botao === null) {
+    return;
+  }
+
+  const item = botao.closest("li[data-id]");
+
+  if (item === null) {
+    return;
+  }
+
+  const id = Number(item.dataset.id);
+  const acao = botao.dataset.acao;
+
+  if (acao === "reservar") {
+    alternarReserva(id);
+  } else if (acao === "remover") {
+    removerPasseio(id);
+  }
+
+  desenhar();
+  devolverFoco(id, acao);
+}
+
+function iniciarLista() {
+  if (areaLista === null) {
+    return;
+  }
+
+  areaLista.addEventListener("click", tratarCliqueLista);
+}
+
+// Formulário: cria um passeio novo, coloca no array e desenha de novo.
+function adicionarPasseio(evento) {
+  evento.preventDefault();
+
+  const nome = formulario.elements["nome"].value.trim();
+  const estado = formulario.elements["estado"].value.trim().toUpperCase();
+  const tipo = formulario.elements["tipo"].value;
+  const vagas = Number(formulario.elements["vagas"].value);
+
+  if (nome === "" || estado.length !== 2 || tipo === "" || Number.isNaN(vagas) || vagas < 1) {
+    mensagemFormulario.textContent = "Confira os campos: preencha o nome, a sigla do estado, o tipo e as vagas.";
+    return;
+  }
+
+  const novoPasseio = {
+    id: proximoId,
+    nome: nome,
+    estado: estado,
+    tipo: tipo,
+    vagas: vagas,
+    inscritos: 0,
+    reservado: false
+  };
+
+  passeios.push(novoPasseio);
+  proximoId++;
+  formulario.reset();
+  desenhar();
+
+  // Avisa se os filtros atuais estão escondendo o passeio novo.
+  const aparece = filtrarPasseios(analisarPasseios([novoPasseio]), filtros).length > 0;
+
+  mensagemFormulario.textContent = aparece
+    ? `Passeio "${nome}" cadastrado.`
+    : `Passeio "${nome}" cadastrado, mas os filtros atuais escondem esse passeio.`;
+}
+
+function iniciarFormulario() {
+  if (formulario === null || mensagemFormulario === null) {
+    return;
+  }
+
+  formulario.addEventListener("submit", adicionarPasseio);
+}
+
+// ---------- 6. Gráfico em Canvas ----------
 const indicadores = [
   { nome: "Transporte", valor: 78 },
   { nome: "Comércio local", valor: 64 },
@@ -258,9 +544,11 @@ function iniciarGrafico() {
   requestAnimationFrame(animarQuadro);
 }
 
-// ---------- 6. Início ----------
-const passeiosAnalisados = analisarPasseios(passeios);
-const textoResumo = gerarResumo(passeiosAnalisados);
-
-mostrarNaPagina(passeiosAnalisados, textoResumo);
+// ---------- 7. Início ----------
+// Cada recurso registra o seu ouvinte uma única vez, aqui no final do arquivo.
+iniciarMenu();
+iniciarFiltros();
+iniciarLista();
+iniciarFormulario();
 iniciarGrafico();
+desenhar();
