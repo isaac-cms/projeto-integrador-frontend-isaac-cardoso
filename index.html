@@ -95,8 +95,29 @@
       <p class="etiqueta">Reservas de passeios</p>
       <h2 id="titulo-passeios">Vagas dos passeios do EcoTrip</h2>
       <p class="texto-apoio">Veja quantas vagas ainda restam em cada passeio e qual é a situação de cada um. As vagas são dados de exemplo do projeto.</p>
-      <p class="resumo" id="resumo"></p>
-      <ul class="grade-passeios" id="lista-passeios"></ul>
+
+      <div class="filtros">
+        <div class="campo">
+          <label for="campo-busca">Buscar passeio</label>
+          <input id="campo-busca" type="search" placeholder="Digite o nome ou o estado" autocomplete="off">
+        </div>
+
+        <div class="campo">
+          <label for="filtro-tipo">Tipo de passeio</label>
+          <select id="filtro-tipo">
+            <option value="todos">Todos os tipos</option>
+            <option value="Trilha">Trilha</option>
+            <option value="Praia">Praia</option>
+            <option value="Ecoturismo">Ecoturismo</option>
+            <option value="Aventura">Aventura</option>
+          </select>
+        </div>
+
+        <button class="botao botao-filtro" id="botao-so-vagas" type="button" aria-pressed="false">Só com vagas</button>
+      </div>
+
+      <p class="resumo" id="resumo" aria-live="polite"></p>
+      <ul class="grade-passeios" id="lista-passeios" tabindex="-1"></ul>
       <noscript>
         <p class="texto-apoio">Ative o JavaScript do navegador para ver a lista de passeios.</p>
       </noscript>
@@ -139,7 +160,7 @@
         </fieldset>
 
         <button class="botao botao-escuro" type="submit">Cadastrar passeio</button>
-        <p class="texto-apoio" id="mensagem-formulario"></p>
+        <p class="texto-apoio" id="mensagem-formulario" aria-live="polite"></p>
       </form>
     </section>
 

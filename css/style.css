@@ -219,6 +219,12 @@ select:focus-visible,
   cursor: pointer;
 }
 
+/* Menu aberto: o botão ganha um fundo para mostrar que está ativo */
+.menu-hamburguer[aria-expanded="true"] {
+  background: var(--verde-claro);
+  border-radius: 0.4rem;
+}
+
 .barra {
   display: block;
   width: 1.6rem;
@@ -350,6 +356,7 @@ select:focus-visible,
   width: 100%;
   margin-top: var(--espaco-m);
   border: 1px solid var(--borda);
+  border-collapse: collapse;
 }
 
 .tabela-destinos caption {
@@ -454,6 +461,84 @@ select:focus-visible,
 .esgotado .selo {
   background: #f6d5d1;
   color: #7a1f16;
+}
+
+/* ---------- Filtros e botões dos passeios ---------- */
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--espaco-m);
+  margin: var(--espaco-m) 0;
+}
+
+.filtros .campo {
+  flex: 1 1 14rem;
+}
+
+.filtros .botao {
+  margin-top: 0;
+}
+
+/* Botão com estado: a aparência muda junto com o aria-pressed */
+.botao-filtro {
+  background: var(--branco);
+  border-color: var(--verde-escuro);
+  color: var(--verde-escuro);
+}
+
+.botao-filtro[aria-pressed="true"] {
+  background: var(--verde-escuro);
+  color: var(--branco);
+}
+
+.botoes-cartao {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-p);
+  margin-top: 0.8rem;
+}
+
+.botao-pequeno {
+  padding: 0.35rem 0.9rem;
+  background: var(--branco);
+  border: 2px solid var(--verde);
+  border-radius: 2rem;
+  color: var(--verde-escuro);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.botao-pequeno[aria-pressed="true"] {
+  background: var(--verde-escuro);
+  border-color: var(--verde-escuro);
+  color: var(--branco);
+}
+
+.botao-pequeno[aria-pressed="true"]::before {
+  content: "✓ ";
+}
+
+.botao-pequeno:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.botao-remover {
+  border-color: var(--vermelho);
+  color: var(--vermelho);
+}
+
+.cartao.reservado {
+  box-shadow: 0 0 0 2px var(--verde);
+}
+
+.cartao-vazio {
+  grid-column: 1 / -1;
+  padding: var(--espaco-m);
+  color: var(--texto-suave);
+  text-align: center;
 }
 
 /* ---------- Formulário ---------- */
